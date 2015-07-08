@@ -27,10 +27,8 @@ namespace EchoServer
                 // TIME_WAIT状態のソケットを再利用する
                 server.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, true);
 
-                // ソケットをアドレスにバインドする
                 server.Bind(endPoint);
                 
-                // 接続の待機を開始する
                 server.Listen(10);
 
                 Console.WriteLine("server started ({0})", server.LocalEndPoint);

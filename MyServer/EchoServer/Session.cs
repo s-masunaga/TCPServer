@@ -13,6 +13,8 @@ namespace EchoServer
     {
         private readonly int id;
         private Socket client;
+        private const int usernameLength = 32;
+        private const int passwordLength = 32;
 
         public Session(int id, Socket socket)
         {
@@ -42,20 +44,42 @@ namespace EchoServer
                 {
                     if (buffer[1] == 0)
                     {
-                        string closeMessage = "loggedin";
-                        byte[] buff = System.Text.Encoding.ASCII.GetBytes(closeMessage);
-                        client.Send(buff);
+                        byte[] usernameBuff = new byte[usernameLength];
+                        Array.Copy(buffer, 2, usernameBuff, 0, usernameLength);
+
+                        byte[] passwordBuff = new byte[passwordLength];
+                        Array.Copy(buffer, 34, passwordBuff, 0, passwordLength);
+                        var username = Encoding.Default.GetString(usernameBuff);
+                        username = username.Replace("\0", "");
+                        var password = Encoding.Default.GetString(passwordBuff);
+                        password = password.Replace("\0", "");
+
+                        if (username == "masunaga" && password == "secret")
+                        {
+                            string loginMessage = "loggedin\n";
+                            byte[] buff = System.Text.Encoding.Default.GetBytes(loginMessage);
+                            client.Send(buff);
+                        }
+                        else
+                        {
+                            SendCloseMessage();
+                            return;
+                        }
                     }
+                    else
+                    {
+                        SendCloseMessage();
+                        return;
+                    }
+
                 }
                 else
                 {
-                    string closeMessage = "Bye.";
-                    byte[] buff = System.Text.Encoding.ASCII.GetBytes(closeMessage);
-                    client.Send(buff);
+                    SendCloseMessage();
                     return;
                 }
 
-                for (; ; )
+                for (; ;)
                 {
                     // クライアントから送信された内容を受信する
                     var len = client.Receive(buffer);
@@ -85,6 +109,13 @@ namespace EchoServer
                 client.Close();
                 Console.WriteLine("#{0} session closed", id);
             }
+        }
+
+        private void SendCloseMessage()
+        {
+            string closeMessage = "Bye.\n";
+            byte[] buff = System.Text.Encoding.ASCII.GetBytes(closeMessage);
+            client.Send(buff);
         }
     }
 }

@@ -34,12 +34,17 @@ namespace Client
 
                 socket.Connect(serverEndPoint);
                 Console.WriteLine("connected to {0}", socket.RemoteEndPoint);
-
+                Console.Write("username:");
+                string inputUsername = Console.ReadLine();
+                inputUsername = inputUsername.Replace(Environment.NewLine, "");
+                Console.Write("password:");
+                string inputPassword = Console.ReadLine();
+                inputPassword = inputPassword.Replace(Environment.NewLine, "");
                 // 非同期での受信を開始する
                 socket.BeginReceive(buffer, 0, buffer.Length, SocketFlags.None, ReceiveCallback, socket);
                 byte[] header = { version, login };
-                byte[] username = Encoding.Default.GetBytes(PaddingInBytes("masunaga",usernameByteSize));
-                byte[] password = Encoding.Default.GetBytes(PaddingInBytes("secret", passwordByteSize));
+                byte[] username = Encoding.Default.GetBytes(PaddingInBytes(inputUsername,usernameByteSize));
+                byte[] password = Encoding.Default.GetBytes(PaddingInBytes(inputPassword, passwordByteSize));
                 byte[] body = username.Concat(password).ToArray();
                 byte[] loginMessage = header.Concat(body).ToArray();
                 socket.Send(loginMessage);
