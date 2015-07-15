@@ -16,10 +16,10 @@ namespace Client
         // 接続先サーバーのエンドポイント
         private static readonly IPEndPoint serverEndPoint = new IPEndPoint(IPAddress.Loopback, 22222);
         private static readonly byte[] buffer = new byte[2000];
-        private const byte version = 0;
-        private const byte login = 0;
-        private const int usernameByteSize = 32;
-        private const int passwordByteSize = 32;
+        private const byte Version = 0x00;
+        private const byte Login = 0x00;
+        private const int UsernameByteSize = 32;
+        private const int PasswordByteSize = 32;
 
         /// <summary>
         /// クライアントの動作
@@ -42,9 +42,9 @@ namespace Client
                 inputPassword = inputPassword.Replace(Environment.NewLine, "");
                 // 非同期での受信を開始する
                 socket.BeginReceive(buffer, 0, buffer.Length, SocketFlags.None, ReceiveCallback, socket);
-                byte[] header = { version, login };
-                byte[] username = Encoding.Default.GetBytes(PaddingInBytes(inputUsername,usernameByteSize));
-                byte[] password = Encoding.Default.GetBytes(PaddingInBytes(inputPassword, passwordByteSize));
+                byte[] header = { Version, Login };
+                byte[] username = Encoding.Default.GetBytes(PaddingInBytes(inputUsername,UsernameByteSize));
+                byte[] password = Encoding.Default.GetBytes(PaddingInBytes(inputPassword, PasswordByteSize));
                 byte[] body = username.Concat(password).ToArray();
                 byte[] loginMessage = header.Concat(body).ToArray();
                 socket.Send(loginMessage);

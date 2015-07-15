@@ -11,10 +11,14 @@ namespace EchoServer
 {
     internal class Session
     {
+        private const int HeaderLength = 2;
+        private const int UsernameLength = 32;
+        private const int PasswordLength = 32;
         private readonly int id;
         private Socket client;
-        private const int usernameLength = 32;
-        private const int passwordLength = 32;
+        private string username;
+
+        List<UserInfo> userInfos = new List<UserInfo> { new UserInfo() { UserName = "masunaga", Password = "secret" }, new UserInfo() { UserName = "yamada", Password = "secret" } };
 
         public Session(int id, Socket socket)
         {
@@ -40,25 +44,29 @@ namespace EchoServer
 
                 var loginDataLength = client.Receive(buffer);
 
-                if (loginDataLength == 66)
+                if (loginDataLength == (HeaderLength + UsernameLength + PasswordLength))
                 {
-                    if (buffer[1] == 0)
+                    if (buffer[1] == 0x00)
                     {
-                        byte[] usernameBuff = new byte[usernameLength];
-                        Array.Copy(buffer, 2, usernameBuff, 0, usernameLength);
+                        byte[] usernameBuff = new byte[UsernameLength];
+                        Array.Copy(buffer, HeaderLength, usernameBuff, 0, UsernameLength);
+                        byte[] passwordBuff = new byte[PasswordLength];
+                        Array.Copy(buffer, HeaderLength + UsernameLength, passwordBuff, 0, PasswordLength);
+                        var inputUsername = Encoding.Default.GetString(usernameBuff);
+                        inputUsername = inputUsername.Replace("\0", "");
+                        var inputPassword = Encoding.Default.GetString(passwordBuff);
+                        inputPassword = inputPassword.Replace("\0", "");
 
-                        byte[] passwordBuff = new byte[passwordLength];
-                        Array.Copy(buffer, 34, passwordBuff, 0, passwordLength);
-                        var username = Encoding.Default.GetString(usernameBuff);
-                        username = username.Replace("\0", "");
-                        var password = Encoding.Default.GetString(passwordBuff);
-                        password = password.Replace("\0", "");
+                        var selectUsernames = from x in userInfos
+                                              where x.UserName == inputUsername && x.Password == inputPassword
+                                              select x.UserName;
 
-                        if (username == "masunaga" && password == "secret")
+                        if (selectUsernames.Count() == 1)
                         {
                             string loginMessage = "loggedin\n";
                             byte[] buff = System.Text.Encoding.Default.GetBytes(loginMessage);
                             client.Send(buff);
+                            this.username = selectUsernames.First();
                         }
                         else
                         {
@@ -79,7 +87,7 @@ namespace EchoServer
                     return;
                 }
 
-                for (; ;)
+                for (; ; )
                 {
                     // クライアントから送信された内容を受信する
                     var len = client.Receive(buffer);
@@ -87,7 +95,7 @@ namespace EchoServer
                     if (0 < len)
                     {
                         // 受信した内容を表示する
-                        Console.Write("#{0}> {1}", id, Encoding.Default.GetString(buffer, 0, len));
+                        Console.Write("#{0}> {1}", this.username, Encoding.Default.GetString(buffer, 0, len));
 
                         // 受信した内容した内容をそのままクライアントに送信する
                         client.Send(buffer, len, SocketFlags.None);
@@ -117,5 +125,13 @@ namespace EchoServer
             byte[] buff = System.Text.Encoding.ASCII.GetBytes(closeMessage);
             client.Send(buff);
         }
+
+
+    }
+
+    internal class UserInfo
+    {
+        internal string UserName { get; set; }
+        internal string Password { get; set; }
     }
 }
