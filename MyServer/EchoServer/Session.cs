@@ -28,7 +28,6 @@ namespace EchoServer
 
         public void Start()
         {
-            // スレッドを作成し、クライアントを処理する
             var t = new Thread(SessionProc);
 
             t.Start();

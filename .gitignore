@@ -1,0 +1,5 @@
+*.manifest
+*.pdb
+*.exe
+MyServer/MyServer.v12.suo
+*.cache
